@@ -60,7 +60,6 @@ static char WelcomeMenu[] =
 /*****************************************************************************
  * Private functions
  ****************************************************************************/
-/* Print error */
 static void PrintCANErrorInfo(uint32_t Status) {
 	if (Status & CAN_ICR_EI) {
 		DEBUGOUT("Error Warning!\r\n");
