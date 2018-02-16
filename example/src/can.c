@@ -31,12 +31,17 @@
  */
 #include "board.h"
 #include "button.h"
+
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
+#define CAN_CTRL_NO         0
 #define LPC_CAN             (LPC_CAN1)
+#define LPC_CAN_2           (LPC_CAN2)
+
+// changed to mikkels id
 #define CAN_TX_MSG_STD_ID (0x15)
-#define CAN_TX_MSG_EXT_ID (CAN_TX_MSG_STD_ID & CAN_EXTEND_ID_USAGE)
+
 
 /*****************************************************************************
  * Public types/enumerations/variables
@@ -44,11 +49,12 @@
 static char WelcomeMenu[] =
 		"\n\rHello NXP Semiconductors \r\n"
 				"CAN DEMO : Use CAN to transmit and receive Message from CAN Analyzer\r\n"
-				"CAN bit rate : 125kBit/s\r\n";
+				"CAN bit rate : 250kBit/s\r\n";
 
 /*****************************************************************************
  * Private functions
  ****************************************************************************/
+/* Print error */
 static void PrintCANErrorInfo(uint32_t Status) {
 	if (Status & CAN_ICR_EI) {
 		DEBUGOUT("Error Warning!\r\n");
@@ -104,9 +110,12 @@ static void PrintCANMsg(CAN_MSG_T *pMsg) {
 static void ReplyNormalMessage(CAN_MSG_T *pRcvMsg) {
 	CAN_MSG_T SendMsgBuf = *pRcvMsg;
 	CAN_BUFFER_ID_T TxBuf;
-	SendMsgBuf.ID &= CAN_EXTEND_ID_USAGE;
-	TxBuf = Chip_CAN_GetFreeTxBuf(LPC_CAN);
-	Chip_CAN_Send(LPC_CAN, TxBuf, &SendMsgBuf);
+	// Increment id
+	SendMsgBuf.ID++;
+	// id is made to extended id (toggle bit 30)
+	SendMsgBuf.ID |= CAN_EXTEND_ID_USAGE;
+ 	TxBuf = Chip_CAN_GetFreeTxBuf(LPC_CAN_2);
+	Chip_CAN_Send(LPC_CAN_2, TxBuf, &SendMsgBuf);
 	DEBUGOUT("Message Replied!!!\r\n");
 	PrintCANMsg(&SendMsgBuf);
 }
@@ -116,23 +125,23 @@ static void ReplyNormalMessage(CAN_MSG_T *pRcvMsg) {
 void CAN_IRQHandler(void) {
 	uint32_t IntStatus;
 	CAN_MSG_T RcvMsgBuf;
-	IntStatus = Chip_CAN_GetIntStatus(LPC_CAN);
+	IntStatus = Chip_CAN_GetIntStatus(LPC_CAN_2);
 
 	PrintCANErrorInfo(IntStatus);
 
 	/* New Message came */
 	if (IntStatus & CAN_ICR_RI) {
-		Chip_CAN_Receive(LPC_CAN, &RcvMsgBuf);
-		DEBUGOUT("Message Received!\r\n");
-		PrintCANMsg(&RcvMsgBuf);
+		Chip_CAN_Receive(LPC_CAN_2, &RcvMsgBuf);
+		//DEBUGOUT("Message Received!!!\r\n");
+		//PrintCANMsg(&RcvMsgBuf);
 
 		if (RcvMsgBuf.ID & CAN_EXTEND_ID_USAGE) {
-			DEBUGOUT("Ignored. Message was extended ID!!!\r\n");
+			DEBUGOUT("Was Extended id ignored");
+
 		} else {
-			DEBUGOUT("Replied. Message was STANDARD ID!!!\r\n");
+			//DEBUGOUT("Reply Long id Message");
 			ReplyNormalMessage(&RcvMsgBuf);
 		}
-
 	}
 }
 
@@ -143,43 +152,51 @@ int main(void) {
 	SystemCoreClockUpdate();
 	Board_Init();
 	DEBUGOUT(WelcomeMenu);
-
-	/* use pins 0.0 and 0.1 */
+	/* LPC_CAN use pins 0.0 and 0.1 */
 	Board_CAN_Init(LPC_CAN);
-	//LPC_CANAF & LPC_CANAF_RAM is used to initialize acceptence
+	/* LPC_CAN_2 use pins 0.4 and 0.5 */
+	Board_CAN_Init(LPC_CAN_2);
+
 	Chip_CAN_Init(LPC_CAN, LPC_CANAF, LPC_CANAF_RAM);
+	// LPC_CANAF = accepcens filter
+	Chip_CAN_Init(LPC_CAN_2, LPC_CANAF, LPC_CANAF_RAM);
+	// Set baurate on CAN 1
 	Chip_CAN_SetBitRate(LPC_CAN, 250000);
+	// Set baurate on CAN 2
+	Chip_CAN_SetBitRate(LPC_CAN_2, 250000);
 	Chip_CAN_EnableInt(LPC_CAN, CAN_IER_BITMASK);
-	/* set acceptance filters to bypass */
+	Chip_CAN_EnableInt(LPC_CAN_2, CAN_IER_BITMASK);
+
+	/* set acceptsance filters to bypass */
 	Chip_CAN_SetAFMode(LPC_CANAF, CAN_AF_BYBASS_MODE);
+
 	/* enable interrupts */
 	NVIC_EnableIRQ(CAN_IRQn);
 
 	/* fill data in TX buffer */
-	//ID svarer til den dag Mikkel er født på året.
-	SendMsgBuf.ID = 15; //CAN_TX_MSG_STD_ID;
+	SendMsgBuf.ID = CAN_TX_MSG_STD_ID;
 	SendMsgBuf.DLC = 4;
 	SendMsgBuf.Type = 0;
-	SendMsgBuf.Data[0] = 'A';
-	SendMsgBuf.Data[1] = 'B';
-	SendMsgBuf.Data[2] = 'C';
-	SendMsgBuf.Data[3] = 'D';
+	SendMsgBuf.Data[0] = 'M';
+	SendMsgBuf.Data[1] = 'i';
+	SendMsgBuf.Data[2] = 'c';
+	SendMsgBuf.Data[3] = 'h';
 
 	while (1) {
-		//implement a button with delay.
+		// if user button is pressed go in if
+		if (!button_get(0))
+		{
 
-		if (!button_get(0)) {
-			/* get free TX buffer no */
+			// get free TX buffer
 			TxBuf = Chip_CAN_GetFreeTxBuf(LPC_CAN);
-			/* and transmit data */
-			Chip_CAN_Send(LPC_CAN, TxBuf, &SendMsgBuf);
-			//wait for TX buffer empty
-			while ((Chip_CAN_GetStatus(LPC_CAN) & CAN_SR_TCS(TxBuf)) == 0) {
-			}
 
-			/* inform about the message sent */
-			DEBUGOUT("Message Sent!\r\n");
-			PrintCANMsg(&SendMsgBuf);
+			// and transmit data
+			Chip_CAN_Send(LPC_CAN, TxBuf, &SendMsgBuf);
+
+			// inform about the message sent
+			//DEBUGOUT("Message Sent!\r\n");
+			//PrintCANMsg(&SendMsgBuf);
+
 		}
 	}
 }
