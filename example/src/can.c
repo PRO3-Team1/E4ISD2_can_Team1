@@ -30,19 +30,13 @@
  * this code.
  */
 #include "board.h"
-
+#include "button.h"
 /*****************************************************************************
  * Private types/enumerations/variables
  ****************************************************************************/
-#define CAN_CTRL_NO         0
 #define LPC_CAN             (LPC_CAN1)
-#define LPC_CAN_2           (LPC_CAN2)
-#define FULL_CAN_AF_USED    0
-
 #define CAN_TX_MSG_STD_ID (0x15)
-#define CAN_TX_MSG_REMOTE_STD_ID (0x300)
-#define CAN_TX_MSG_EXT_ID (0x15 & CAN_EXTEND_ID_USAGE)
-#define CAN_RX_MSG_ID (0x100)
+#define CAN_TX_MSG_EXT_ID (CAN_TX_MSG_STD_ID & CAN_EXTEND_ID_USAGE)
 
 /*****************************************************************************
  * Public types/enumerations/variables
@@ -51,11 +45,6 @@ static char WelcomeMenu[] =
 		"\n\rHello NXP Semiconductors \r\n"
 				"CAN DEMO : Use CAN to transmit and receive Message from CAN Analyzer\r\n"
 				"CAN bit rate : 125kBit/s\r\n";
-/*CAN_STD_ID_RANGE_ENTRY_T SffGrpSection[] = {
- {{CAN_CTRL_NO, 0, 0x300}, {CAN_CTRL_NO, 0, 0x400}},
- {{CAN_CTRL_NO, 0, 0x500}, {CAN_CTRL_NO, 0, 0x600}},
- {{CAN_CTRL_NO, 0, 0x700}, {CAN_CTRL_NO, 0, 0x780}},
- };*/
 
 /*****************************************************************************
  * Private functions
@@ -125,9 +114,6 @@ static void ReplyNormalMessage(CAN_MSG_T *pRcvMsg) {
  * Public functions
  ****************************************************************************/
 void CAN_IRQHandler(void) {
-#if FULL_CAN_AF_USED
-	uint16_t i = 0, FullCANEntryNum = 0;
-#endif
 	uint32_t IntStatus;
 	CAN_MSG_T RcvMsgBuf;
 	IntStatus = Chip_CAN_GetIntStatus(LPC_CAN);
@@ -137,7 +123,7 @@ void CAN_IRQHandler(void) {
 	/* New Message came */
 	if (IntStatus & CAN_ICR_RI) {
 		Chip_CAN_Receive(LPC_CAN, &RcvMsgBuf);
-		DEBUGOUT("Message Received!!!\r\n");
+		DEBUGOUT("Message Received!\r\n");
 		PrintCANMsg(&RcvMsgBuf);
 
 		if (RcvMsgBuf.ID & CAN_EXTEND_ID_USAGE) {
@@ -148,29 +134,6 @@ void CAN_IRQHandler(void) {
 		}
 
 	}
-#if FULL_CAN_AF_USED
-	FullCANEntryNum = Chip_CAN_GetEntriesNum(LPC_CANAF, LPC_CANAF_RAM,
-			CANAF_RAM_FULLCAN_SEC);
-	if (FullCANEntryNum > 64) {
-		FullCANEntryNum = 64;
-	}
-	for (i = 0; i < FullCANEntryNum; i++)
-		if (Chip_CAN_GetFullCANIntStatus(LPC_CANAF, i)) {
-			uint8_t SCC;
-			Chip_CAN_FullCANReceive(LPC_CANAF, LPC_CANAF_RAM, i, &RcvMsgBuf,
-					&SCC);
-			if (SCC == CAN_CTRL_NO) {
-				DEBUGOUT("FullCAN Message Received!!!\r\n");
-				PrintCANMsg(&RcvMsgBuf);
-				if (RcvMsgBuf.Type & CAN_REMOTE_MSG) {
-					//ReplyRemoteMessage(&RcvMsgBuf);
-				} else {
-					ReplyNormalMessage(&RcvMsgBuf);
-				}
-			}
-		}
-
-#endif /*FULL_CAN_AF_USED*/
 }
 
 int main(void) {
@@ -205,17 +168,18 @@ int main(void) {
 	while (1) {
 		//implement a button with delay.
 
-		/* get free TX buffer no */
-		TxBuf = Chip_CAN_GetFreeTxBuf(LPC_CAN);
-		/* and transmit data */
-		Chip_CAN_Send(LPC_CAN, TxBuf, &SendMsgBuf);
-		//wait for TX buffer empty
-		while ((Chip_CAN_GetStatus(LPC_CAN) & CAN_SR_TCS(TxBuf)) == 0) {
+		if (!button_get(0)) {
+			/* get free TX buffer no */
+			TxBuf = Chip_CAN_GetFreeTxBuf(LPC_CAN);
+			/* and transmit data */
+			Chip_CAN_Send(LPC_CAN, TxBuf, &SendMsgBuf);
+			//wait for TX buffer empty
+			while ((Chip_CAN_GetStatus(LPC_CAN) & CAN_SR_TCS(TxBuf)) == 0) {
+			}
+
+			/* inform about the message sent */
+			DEBUGOUT("Message Sent!\r\n");
+			PrintCANMsg(&SendMsgBuf);
 		}
-
-		/* inform about the message sent */
-		DEBUGOUT("Message Sent!\r\n");
-		PrintCANMsg(&SendMsgBuf);
-
 	}
 }

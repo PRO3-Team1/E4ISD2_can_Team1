@@ -1,5 +1,5 @@
-example/src/can.o example/src/can.d: ../example/src/can.c \
- /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/board.h \
+example/src/button.o example/src/button.d: ../example/src/button.c \
+ ../example/src/button.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/chip.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/lpc_types.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/sys_config.h \
@@ -46,6 +46,7 @@ example/src/can.o example/src/can.d: ../example/src/can.c \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/iap.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/error.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/fpu_init.h \
+ /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/board.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/lpc_norflash.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/board.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/lpc_nandflash.h \
@@ -53,10 +54,9 @@ example/src/can.o example/src/can.d: ../example/src/can.c \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/uda1380.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/board_api.h \
  /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/lpc_types.h \
- /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/lpc_phy.h \
- ../example/src/button.h
+ /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/lpc_phy.h
 
-/home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/board.h:
+../example/src/button.h:
 
 /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/chip.h:
 
@@ -150,6 +150,8 @@ example/src/can.o example/src/can.d: ../example/src/can.c \
 
 /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/fpu_init.h:
 
+/home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/board.h:
+
 /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/lpc_norflash.h:
 
 /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/board.h:
@@ -165,5 +167,3 @@ example/src/can.o example/src/can.d: ../example/src/can.c \
 /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_chip_40xx/inc/lpc_types.h:
 
 /home/tobias/Documents/MCUXpresso_10.1.0_589/workspace/lpc_board_ea_devkit_4088/inc/lpc_phy.h:
-
-../example/src/button.h:
